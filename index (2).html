@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pavan@tracker</title>
+<style>
+  :root{
+    --bg:#0A0C10;
+    --surface:#12151C;
+    --surface2:#181C25;
+    --border:#242938;
+    --text:#E8EAED;
+    --muted:#7C8494;
+    --ember:#FF8A3D;
+    --ember-dim:#7A4420;
+    --mint:#35D2A4;
+    --peri:#7C9FFF;
+    --danger:#FF5470;
+    --mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans:'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans);}
+  ::selection{background:var(--ember);color:#0A0C10;}
+  a{color:var(--peri);}
+
+  /* ---------- LOGIN ---------- */
+  #login-screen{
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    position:relative;overflow:hidden;
+    background:var(--bg);
+    padding:20px;
+  }
+  .bg-orb{position:absolute;border-radius:50%;filter:blur(70px);opacity:0.28;pointer-events:none;animation:drift 16s ease-in-out infinite;}
+  .bg-orb.o1{width:420px;height:420px;background:var(--peri);top:-120px;left:-100px;animation-delay:0s;}
+  .bg-orb.o2{width:380px;height:380px;background:var(--ember);bottom:-140px;right:-100px;animation-delay:4s;}
+  .bg-orb.o3{width:260px;height:260px;background:var(--mint);top:40%;left:60%;animation-delay:8s;}
+  @keyframes drift{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(30px,-20px) scale(1.08);}}
+
+  .motivation-zone{position:relative;z-index:2;text-align:center;max-width:460px;margin-bottom:26px;min-height:52px;}
+  .quote-text{font-size:16px;font-weight:600;color:var(--text);line-height:1.5;opacity:0;animation:quoteFade 6s ease-in-out infinite;}
+  @keyframes quoteFade{0%{opacity:0;transform:translateY(6px);}10%{opacity:1;transform:translateY(0);}85%{opacity:1;}100%{opacity:0;transform:translateY(-6px);}}
+  .quote-attr{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:8px;letter-spacing:0.06em;}
+
+  .term-card{
+    position:relative;z-index:2;
+    width:100%;max-width:420px;background:var(--surface);border:1px solid var(--border);
+    border-radius:12px;overflow:hidden;box-shadow:0 25px 70px rgba(0,0,0,0.55);
+    animation:cardIn .5s ease;
+  }
+  @keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(0.98);}to{opacity:1;transform:translateY(0) scale(1);}}
+
+  .auth-tabs{display:flex;border-bottom:1px solid var(--border);}
+  .tab-btn{
+    flex:1;padding:13px 10px;background:none;border:none;cursor:pointer;
+    font-family:var(--mono);font-size:12px;letter-spacing:0.06em;text-transform:uppercase;
+    color:var(--muted);border-bottom:2px solid transparent;transition:all .15s;
+  }
+  .tab-btn.active{color:var(--text);border-bottom-color:var(--ember);}
+  .tab-btn:hover{color:var(--text);}
+  .auth-panel{display:none;}
+  .auth-panel.active{display:block;}
+  .term-bar{display:flex;align-items:center;gap:6px;padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border);}
+  .dot{width:10px;height:10px;border-radius:50%;}
+  .dot.r{background:#FF5F56;} .dot.y{background:#FFBD2E;} .dot.g{background:#27C93F;}
+  .term-title{margin-left:8px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .term-body{padding:30px 28px 34px;}
+  .prompt-line{font-family:var(--mono);font-size:13px;color:var(--mint);margin-bottom:18px;}
+  .prompt-line .caret{display:inline-block;width:7px;height:14px;background:var(--mint);margin-left:2px;animation:blink 1s steps(1) infinite;vertical-align:-2px;}
+  @keyframes blink{50%{opacity:0;}}
+  .login-h{font-family:var(--mono);font-size:22px;font-weight:700;margin:0 0 4px;letter-spacing:-0.5px;}
+  .login-sub{color:var(--muted);font-size:13px;margin:0 0 26px;}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;}
+  .field input{
+    width:100%;padding:11px 13px;background:var(--bg);border:1px solid var(--border);
+    border-radius:6px;color:var(--text);font-family:var(--mono);font-size:14px;outline:none;
+    transition:border-color .15s;
+  }
+  .field input:focus{border-color:var(--peri);}
+  .login-btn{
+    width:100%;padding:12px;border:none;border-radius:6px;background:var(--ember);color:#1a0d02;
+    font-family:var(--mono);font-weight:700;font-size:14px;cursor:pointer;margin-top:6px;letter-spacing:0.02em;
+    transition:transform .1s, filter .15s;
+  }
+  .login-btn:hover{filter:brightness(1.08);}
+  .login-btn:active{transform:scale(0.98);}
+  .login-err{color:var(--danger);font-family:var(--mono);font-size:12px;margin-top:12px;min-height:14px;}
+
+  /* ---------- APP ---------- */
+  #app-screen{display:none;min-height:100vh;}
+  .wrap{max-width:880px;margin:0 auto;padding:36px 20px 80px;}
+
+  header.app-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:30px;gap:16px;flex-wrap:wrap;}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:0.18em;color:var(--muted);text-transform:uppercase;margin:0 0 6px;}
+  .h1{font-family:var(--mono);font-size:30px;font-weight:700;letter-spacing:-0.5px;margin:0;}
+  .date-sub{color:var(--muted);font-size:13px;margin-top:6px;font-family:var(--mono);}
+
+  .streak-box{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 16px;}
+  .flame{font-size:26px;line-height:1;filter:drop-shadow(0 0 6px rgba(255,138,61,0.5));}
+  .streak-num{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ember);}
+  .streak-label{font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;}
+  .logout-link{font-family:var(--mono);font-size:11px;color:var(--muted);background:none;border:1px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;}
+  .logout-link:hover{color:var(--text);border-color:var(--muted);}
+  .top-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px 22px 24px;margin-bottom:22px;transition:border-color .2s;}
+  .card-title{font-family:var(--mono);font-size:13px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin:0 0 16px;display:flex;align-items:center;justify-content:space-between;}
+
+  /* Mission banner */
+  .mission-banner{
+    border-radius:14px;padding:22px 24px;margin-bottom:24px;border:1px solid var(--border);
+    background:linear-gradient(135deg, rgba(255,138,61,0.10), rgba(124,159,255,0.06));
+    transition:background .4s ease, border-color .4s ease;
+  }
+  .mission-banner.complete{background:linear-gradient(135deg, rgba(53,210,164,0.16), rgba(53,210,164,0.04));border-color:rgba(53,210,164,0.35);}
+  .mission-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+  .mission-text{font-size:15.5px;font-weight:600;line-height:1.4;margin:0;}
+  .mission-count{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap;}
+  .progress-track{width:100%;height:8px;border-radius:999px;background:var(--bg);overflow:hidden;border:1px solid var(--border);}
+  .progress-fill{height:100%;border-radius:999px;background:linear-gradient(90deg, var(--ember), var(--mint));transition:width .5s cubic-bezier(.4,0,.2,1);}
+
+  .task-item{transition:background .15s;border-radius:8px;}
+  .task-item:hover{background:rgba(255,255,255,0.02);}
+  .tick{transition:transform .15s, background .15s, border-color .15s;}
+  .tick:active{transform:scale(0.88);}
+
+  /* Task list */
+  .add-row{display:flex;gap:8px;margin-bottom:16px;}
+  .add-row input{flex:1;padding:11px 13px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;outline:none;}
+  .add-row input:focus{border-color:var(--peri);}
+  .add-row button{padding:11px 18px;background:var(--peri);border:none;border-radius:8px;color:#0A0C10;font-weight:700;cursor:pointer;font-size:14px;}
+  .add-row button:hover{filter:brightness(1.08);}
+
+  .task-item{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--border);}
+  .task-item:last-child{border-bottom:none;}
+  .tick{
+    width:22px;height:22px;border-radius:6px;border:2px solid var(--border);flex:0 0 22px;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;color:transparent;font-size:14px;font-weight:900;
+    transition:all .15s;
+  }
+  .tick.done{background:var(--mint);border-color:var(--mint);color:#06231A;}
+  .task-text{flex:1;font-size:14.5px;}
+  .task-text.done{color:var(--muted);text-decoration:line-through;}
+  .task-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:2px 6px;}
+  .task-del:hover{color:var(--danger);}
+  .empty-note{color:var(--muted);font-size:13px;font-style:italic;padding:6px 4px;}
+
+  /* DSA pattern card */
+  .dsa-card{border-color:rgba(124,159,255,0.3);background:linear-gradient(180deg, rgba(124,159,255,0.06), var(--surface) 60%);}
+  .dsa-cat{font-family:var(--mono);font-size:11px;color:var(--peri);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;}
+  .dsa-name{font-size:21px;font-weight:700;margin:0 0 14px;letter-spacing:-0.3px;}
+  .dsa-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;}
+  .day-dots{display:flex;gap:6px;align-items:center;}
+  .day-dot{width:8px;height:8px;border-radius:50%;background:var(--border);}
+  .day-dot.filled{background:var(--peri);}
+  .day-dots-label{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:4px;}
+  .dsa-mark{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
+  .dsa-mark span{font-size:14px;font-weight:600;}
+  .progress-note{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:12px;}
+
+  /* Consistency */
+  .heatmap{display:grid;grid-template-rows:repeat(7,1fr);grid-auto-flow:column;gap:3px;overflow-x:auto;padding-bottom:6px;}
+  .hcell{width:11px;height:11px;border-radius:2px;background:var(--border);}
+  .legend{display:flex;align-items:center;gap:6px;margin-top:10px;font-family:var(--mono);font-size:10px;color:var(--muted);}
+  .legend .hcell{width:9px;height:9px;}
+
+  .trend-wrap{margin-top:20px;}
+  .trend-label{font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:8px;}
+  svg.trend{width:100%;height:110px;display:block;}
+
+  /* Reflection log */
+  .reflect-item{padding:10px 4px;border-bottom:1px solid var(--border);}
+  .reflect-item:last-child{border-bottom:none;}
+  .reflect-date{font-family:var(--mono);font-size:11px;color:var(--peri);margin-bottom:3px;}
+  .reflect-text{font-size:13.5px;color:var(--text);}
+
+  /* Modal */
+  #modal-overlay{
+    display:none;position:fixed;inset:0;background:rgba(5,6,9,0.75);backdrop-filter:blur(3px);
+    align-items:center;justify-content:center;z-index:50;padding:20px;
+  }
+  .modal-card{width:100%;max-width:440px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:26px;}
+  .modal-flame{font-size:30px;margin-bottom:8px;}
+  .modal-h{font-family:var(--mono);font-size:19px;font-weight:700;margin:0 0 6px;}
+  .modal-sub{color:var(--muted);font-size:13px;margin:0 0 16px;}
+  .modal-card textarea{
+    width:100%;min-height:90px;background:var(--bg);border:1px solid var(--border);border-radius:8px;
+    color:var(--text);padding:12px;font-family:var(--sans);font-size:14px;outline:none;resize:vertical;
+  }
+  .modal-card textarea:focus{border-color:var(--peri);}
+  .modal-actions{display:flex;gap:10px;margin-top:14px;}
+  .modal-actions button{flex:1;padding:11px;border-radius:8px;border:none;font-weight:700;cursor:pointer;font-size:13.5px;}
+  .btn-save{background:var(--ember);color:#1a0d02;}
+  .btn-skip{background:var(--surface2);color:var(--muted);border:1px solid var(--border) !important;}
+
+  @media(max-width:520px){
+    .h1{font-size:24px;}
+    .streak-box{padding:8px 12px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="bg-orb o1"></div>
+  <div class="bg-orb o2"></div>
+  <div class="bg-orb o3"></div>
+
+  <div class="motivation-zone">
+    <div class="quote-text" id="quote-text"></div>
+    <div class="quote-attr" id="quote-attr"></div>
+  </div>
+
+  <div class="term-card">
+    <div class="term-bar">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="term-title">tracker: ~</span>
+    </div>
+
+    <div class="auth-tabs">
+      <button class="tab-btn active" id="tab-login-btn">Log in</button>
+      <button class="tab-btn" id="tab-register-btn">Register</button>
+    </div>
+
+    <!-- LOG IN PANEL -->
+    <div class="term-body auth-panel active" id="panel-login">
+      <div class="prompt-line">$ ./login --user<span class="caret"></span></div>
+      <h1 class="login-h">Welcome back</h1>
+      <p class="login-sub">Sign in to open today's list.</p>
+      <div class="field">
+        <label for="user-input">Username</label>
+        <input id="user-input" type="text" autocomplete="username" placeholder="pavan">
+      </div>
+      <div class="field">
+        <label for="pass-input">Password</label>
+        <input id="pass-input" type="password" autocomplete="current-password" placeholder="••••••••">
+      </div>
+      <button class="login-btn" id="login-btn">Log in</button>
+      <div class="login-err" id="login-err"></div>
+    </div>
+
+    <!-- REGISTER PANEL -->
+    <div class="term-body auth-panel" id="panel-register">
+      <div class="prompt-line">$ ./register --new<span class="caret"></span></div>
+      <h1 class="login-h">Start your streak</h1>
+      <p class="login-sub">Create an account to track your own days.</p>
+      <div class="field">
+        <label for="reg-user-input">Username</label>
+        <input id="reg-user-input" type="text" autocomplete="username" placeholder="choose a username">
+      </div>
+      <div class="field">
+        <label for="reg-pass-input">Password</label>
+        <input id="reg-pass-input" type="password" autocomplete="new-password" placeholder="at least 4 characters">
+      </div>
+      <div class="field">
+        <label for="reg-pass-confirm">Confirm password</label>
+        <input id="reg-pass-confirm" type="password" autocomplete="new-password" placeholder="repeat password">
+      </div>
+      <button class="login-btn" id="register-btn">Create account</button>
+      <div class="login-err" id="register-err"></div>
+    </div>
+  </div>
+</div>
+
+<!-- APP SCREEN -->
+<div id="app-screen">
+  <div class="wrap">
+    <header class="app-head">
+      <div>
+        <p class="eyebrow">Daily Tracker</p>
+        <h1 class="h1">Every day list of works</h1>
+        <p class="date-sub" id="today-label"></p>
+      </div>
+      <div class="top-right">
+        <div class="streak-box">
+          <span class="flame" id="flame-icon">🔥</span>
+          <div>
+            <div class="streak-num" id="streak-num">0</div>
+            <div class="streak-label">day streak</div>
+          </div>
+        </div>
+        <button class="logout-link" id="logout-btn">Log out</button>
+      </div>
+    </header>
+
+    <div class="mission-banner" id="mission-banner">
+      <div class="mission-top">
+        <p class="mission-text" id="mission-text"></p>
+        <span class="mission-count" id="mission-count"></span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="mission-fill" style="width:0%"></div></div>
+    </div>
+
+    <!-- Tasks -->
+    <div class="card">
+      <p class="card-title">Today's tasks</p>
+      <div class="add-row">
+        <input id="new-task-input" type="text" placeholder="Add a task for today…" maxlength="120">
+        <button id="add-task-btn">Add</button>
+      </div>
+      <div id="task-list"></div>
+    </div>
+
+    <!-- DSA Pattern -->
+    <div class="card dsa-card">
+      <p class="card-title">Pattern of the day <span id="pattern-progress-label"></span></p>
+      <div class="dsa-cat" id="dsa-cat"></div>
+      <h3 class="dsa-name" id="dsa-name"></h3>
+      <div class="dsa-row">
+        <div class="day-dots" id="day-dots"></div>
+        <div class="dsa-mark" id="dsa-mark">
+          <div class="tick" id="dsa-tick"></div>
+          <span>Mark pattern practiced</span>
+        </div>
+      </div>
+      <p class="progress-note" id="dsa-note"></p>
+    </div>
+
+    <!-- Consistency -->
+    <div class="card">
+      <p class="card-title">Consistency</p>
+      <div class="heatmap" id="heatmap"></div>
+      <div class="legend">
+        <span>Less</span>
+        <div class="hcell" style="background:#242938"></div>
+        <div class="hcell" style="background:#7A4420"></div>
+        <div class="hcell" style="background:#B8622F"></div>
+        <div class="hcell" style="background:#FF8A3D"></div>
+        <span>More</span>
+      </div>
+      <div class="trend-wrap">
+        <p class="trend-label">Completion rate — last 14 days</p>
+        <svg class="trend" id="trend-svg" viewBox="0 0 700 110" preserveAspectRatio="none"></svg>
+      </div>
+    </div>
+
+    <!-- Reflection log -->
+    <div class="card">
+      <p class="card-title">Learning log</p>
+      <div id="reflect-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Reflection modal -->
+<div id="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-flame">🎉</div>
+    <h3 class="modal-h">All tasks done for today</h3>
+    <p class="modal-sub">Have you learned any new topic or something unknown today?</p>
+    <textarea id="reflect-input" placeholder="e.g. Learned how the monotonic stack keeps elements in order to find next-greater elements in O(n)…"></textarea>
+    <div class="modal-actions">
+      <button class="btn-skip" id="modal-skip">Skip</button>
+      <button class="btn-save" id="modal-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+const PATTERNS = [
+["Arrays","Two Pointers"],["Arrays","Sliding Window"],["Arrays","Prefix Sum"],["Arrays","Suffix Sum"],["Arrays","Kadane's Algorithm (max subarray)"],["Arrays","Dutch National Flag"],["Arrays","Merge Intervals"],["Arrays","Binary Search on Answer"],["Arrays","Matrix Traversal"],["Arrays","Difference Array"],
+["Strings","KMP Pattern Matching"],["Strings","Rabin-Karp (rolling hash)"],["Strings","Z-Algorithm"],["Strings","Manacher's (palindromes)"],["Strings","Anagram / Frequency Map"],["Strings","Trie Prefix Search"],["Strings","Suffix Array / LCP"],
+["Linked Lists","Fast & Slow Pointers (Floyd)"],["Linked Lists","Reverse a List"],["Linked Lists","Merge Two Lists"],["Linked Lists","Runner Technique"],["Linked Lists","Two Pointers for Cycle"],["Linked Lists","In-place Manipulation"],["Linked Lists","Dummy Head Node"],["Linked Lists","Recursive Reversal"],
+["Stacks & Queues","Monotonic Stack"],["Stacks & Queues","Monotonic Queue"],["Stacks & Queues","Next Greater / Smaller Element"],["Stacks & Queues","Balanced Parentheses"],["Stacks & Queues","Min Stack / Max Stack"],["Stacks & Queues","BFS with Queue"],["Stacks & Queues","Sliding Window Maximum"],["Stacks & Queues","Decode / Evaluate Expression"],
+["Hashing","Frequency Count"],["Hashing","Complement / Two-Sum"],["Hashing","Group Anagrams"],["Hashing","Subarray Sum = K"],["Hashing","Longest Subarray"],["Hashing","Rolling Hash"],["Hashing","HashMap + Sliding Window"],["Hashing","Counting Sort via Map"],
+["Trees","DFS (Preorder / Inorder / Postorder)"],["Trees","BFS (Level Order)"],["Trees","Path Sum / Root-to-Leaf"],["Trees","Lowest Common Ancestor"],["Trees","Diameter / Height"],["Trees","Serialize & Deserialize"],["Trees","BST Properties (range, kth)"],["Trees","Morris Traversal"],["Trees","Recursion on Subtrees"],
+["Heaps / Priority Queues","Top-K Elements"],["Heaps / Priority Queues","K-Way Merge"],["Heaps / Priority Queues","Kth Largest / Smallest"],["Heaps / Priority Queues","Two Heaps (median)"],["Heaps / Priority Queues","Greedy with Heap"],["Heaps / Priority Queues","Dijkstra's / Prim's support"],["Heaps / Priority Queues","Sliding Window + Heap"],["Heaps / Priority Queues","Event Scheduling"],
+["Tries","Prefix Matching"],["Tries","Word Search"],["Tries","Longest Common Prefix"],["Tries","Autocomplete"],["Tries","Bitwise Trie (XOR max)"],["Tries","Count Words with Prefix"],["Tries","Replace Words / Stream"],
+["Graphs","Topological Sort (Kahn / DFS)"],["Graphs","Union-Find (DSU)"],["Graphs","Dijkstra's (weighted shortest)"],["Graphs","Bellman-Ford (negative edges)"],["Graphs","Floyd-Warshall (all pairs)"],["Graphs","Cycle Detection"],["Graphs","Bipartite Check"],["Graphs","Bridges & Articulation Points"],["Graphs","Multi-source BFS"],["Graphs","0-1 BFS"],
+["Dynamic Programming","1D DP (Fibonacci-style)"],["Dynamic Programming","2D DP (grid, LCS)"],["Dynamic Programming","Knapsack (0/1 and Unbounded)"],["Dynamic Programming","Longest Increasing Subsequence"],["Dynamic Programming","Longest Common Subsequence"],["Dynamic Programming","Partition DP"],["Dynamic Programming","Interval DP"],["Dynamic Programming","Digit DP"],["Dynamic Programming","Bitmask DP"],["Dynamic Programming","DP on Trees"],["Dynamic Programming","Space-Optimized DP"],["Dynamic Programming","Memoization (Top-down)"],
+["Backtracking","Subsets / Power Set"],["Backtracking","Permutations"],["Backtracking","Combinations (nCr)"],["Backtracking","N-Queens / Placement"],["Backtracking","Word Search on Grid"],["Backtracking","Constraint Pruning"],["Backtracking","Pruning with Sorting"],["Backtracking","Palindrome Partitioning"],["Backtracking","Sudoku Solver"],
+["Greedy","Activity Selection"],["Greedy","Interval Scheduling"],["Greedy","Fractional Knapsack"],["Greedy","Huffman Encoding"],["Greedy","Meeting Rooms"],["Greedy","Jump Game"],["Greedy","Candy / Gas Station"],["Greedy","Task Scheduler"],["Greedy","Greedy + Sort"],["Greedy","Greedy + Heap"],
+["Binary Search","Classic Binary Search"],["Binary Search","Lower / Upper Bound"],["Binary Search","Search in Rotated Array"],["Binary Search","First / Last Occurrence"],["Binary Search","Peak Element"],["Binary Search","Minimize Max / Maximize Min"],["Binary Search","Binary Search on Floating Point"],["Binary Search","2D Matrix Search"],
+["Bit Manipulation","AND / OR / XOR Tricks"],["Bit Manipulation","Check / Set / Clear Bit"],["Bit Manipulation","Count Set Bits (Brian Kernighan)"],["Bit Manipulation","Power of Two Check"],["Bit Manipulation","XOR for Missing / Duplicate"],["Bit Manipulation","Bitmask Subsets"],["Bit Manipulation","Swap without Temp"],["Bit Manipulation","Find Odd One Out"],["Bit Manipulation","Hamming Distance"],
+["Math & Number Theory","Sieve of Eratosthenes"],["Math & Number Theory","GCD / LCM (Euclidean)"],["Math & Number Theory","Modular Arithmetic"],["Math & Number Theory","Fast Exponentiation"],["Math & Number Theory","Prime Factorization"],["Math & Number Theory","Catalan Numbers"],["Math & Number Theory","Combinatorics / nCr mod p"],["Math & Number Theory","Pigeonhole Principle"],["Math & Number Theory","Matrix Exponentiation"]
+];
+
+const USERS_KEY = "pavan-tracker-users-v1";
+const STATE_PREFIX = "pavan-tracker-state-v1";
+
+const QUOTES = [
+  ["Discipline is choosing between what you want now and what you want most.", "Anonymous"],
+  ["Small daily improvements lead to staggering long-term results.", "Anonymous"],
+  ["You don't have to be great to start, but you have to start to be great.", "Zig Ziglar"],
+  ["A pattern solved today is a problem you'll never fear again.", "Anonymous"],
+  ["Consistency is what transforms average into excellence.", "Anonymous"],
+  ["The streak isn't the goal. Who you become by keeping it is.", "Anonymous"],
+  ["One task at a time. One day at a time. That's how it's built.", "Anonymous"],
+  ["Motivation gets you started. Habit keeps you going.", "Jim Ryun"],
+  ["Every pattern you learn today is a shortcut for tomorrow.", "Anonymous"],
+  ["Show up, even when you don't feel like it. Especially then.", "Anonymous"]
+];
+
+let state = null;
+let currentUser = null;
+
+/* ---------------- STORAGE (localStorage-backed, for standalone/GitHub Pages use) ---------------- */
+/* Mirrors the get/set(key, value, shared) shape used in Claude artifacts, but persists
+   in this browser's localStorage instead — no account or server needed. */
+const storage = {
+  async get(key){
+    const raw = localStorage.getItem(key);
+    if(raw === null) return null;
+    return { key, value: raw };
+  },
+  async set(key, value){
+    localStorage.setItem(key, value);
+    return { key, value };
+  }
+};
+
+async function loadUsers(){
+  try{
+    const res = await storage.get(USERS_KEY);
+    if(res && res.value) return JSON.parse(res.value);
+  }catch(e){ /* not found */ }
+  const defaults = { pavan: "pavan123" };
+  await storage.set(USERS_KEY, JSON.stringify(defaults));
+  return defaults;
+}
+async function saveUsers(users){
+  await storage.set(USERS_KEY, JSON.stringify(users));
+}
+function stateKeyFor(username){
+  return `${STATE_PREFIX}:${username}`;
+}
+
+function todayStr(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function dateFromStr(s){ const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
+function diffDays(a,b){ return Math.round((dateFromStr(a) - dateFromStr(b)) / 86400000); }
+function fmtLabel(s){
+  return dateFromStr(s).toLocaleDateString(undefined, {weekday:'long', month:'long', day:'numeric', year:'numeric'});
+}
+function uid(){ return Math.random().toString(36).slice(2,10); }
+
+function defaultState(){
+  return {
+    tasksByDate: {},
+    dsaLog: {},
+    patternIndex: 0,
+    patternStartDate: null,
+    patternDone: false,
+    streak: 0,
+    lastFullDate: null,
+    reflections: {}
+  };
+}
+
+async function loadState(){
+  try{
+    const res = await storage.get(stateKeyFor(currentUser));
+    if(res && res.value) return JSON.parse(res.value);
+  }catch(e){ /* not found yet */ }
+  return defaultState();
+}
+async function saveState(){
+  try{
+    await storage.set(stateKeyFor(currentUser), JSON.stringify(state));
+  }catch(e){ console.error('save failed', e); }
+}
+
+function ensureToday(){
+  const t = todayStr();
+  if(!state.tasksByDate[t]) state.tasksByDate[t] = [];
+  if(state.patternStartDate === null){
+    state.patternStartDate = t;
+  }
+  // advance pattern if it was completed and at least 2 days have passed since it started
+  const days = diffDays(t, state.patternStartDate);
+  if(state.patternDone && days >= 2){
+    state.patternIndex = (state.patternIndex + 1) % PATTERNS.length;
+    state.patternStartDate = t;
+    state.patternDone = false;
+  }
+  // if streak's last full day is not yesterday and not today, streak resets
+  if(state.lastFullDate && state.lastFullDate !== t){
+    const gap = diffDays(t, state.lastFullDate);
+    if(gap > 1) state.streak = 0;
+  }
+}
+
+function isDayFull(dateStr){
+  const tasks = state.tasksByDate[dateStr] || [];
+  const dsaOk = !!state.dsaLog[dateStr];
+  const tasksOk = tasks.length === 0 ? true : tasks.every(t => t.done);
+  return dsaOk && tasksOk && (tasks.length > 0 || dsaOk);
+}
+
+function currentPattern(){
+  return PATTERNS[state.patternIndex % PATTERNS.length];
+}
+
+/* ---------------- RENDER ---------------- */
+
+function renderMissionBanner(){
+  const t = todayStr();
+  const tasks = state.tasksByDate[t] || [];
+  const dsaDone = !!state.dsaLog[t];
+  const totalUnits = tasks.length + 1;
+  const doneUnits = tasks.filter(x => x.done).length + (dsaDone ? 1 : 0);
+  const pct = Math.round((doneUnits / totalUnits) * 100);
+
+  const banner = document.getElementById('mission-banner');
+  const textEl = document.getElementById('mission-text');
+  const countEl = document.getElementById('mission-count');
+  const fillEl = document.getElementById('mission-fill');
+
+  fillEl.style.width = pct + '%';
+  countEl.textContent = `${doneUnits} / ${totalUnits} done`;
+
+  if(pct >= 100 && totalUnits > 0){
+    banner.classList.add('complete');
+    textEl.textContent = `Day complete, ${currentUser}. That's how streaks are built — see you tomorrow.`;
+  } else {
+    banner.classList.remove('complete');
+    if(doneUnits === 0){
+      textEl.textContent = `Let's get moving, ${currentUser}. Finish every task today to keep the streak alive.`;
+    } else if(pct < 100){
+      textEl.textContent = `Good progress — ${totalUnits - doneUnits} task${totalUnits - doneUnits === 1 ? '' : 's'} left. Finish strong.`;
+    }
+  }
+}
+
+function render(){
+  const t = todayStr();
+  document.getElementById('today-label').textContent = `${fmtLabel(t)} · logged in as ${currentUser}`;
+
+  renderMissionBanner();
+
+  // streak
+  document.getElementById('streak-num').textContent = state.streak;
+  const flame = document.getElementById('flame-icon');
+  const scale = Math.min(1 + state.streak * 0.03, 1.6);
+  flame.style.transform = `scale(${scale})`;
+  flame.style.opacity = state.streak > 0 ? 1 : 0.35;
+
+  // tasks
+  const list = document.getElementById('task-list');
+  list.innerHTML = '';
+  const tasks = state.tasksByDate[t] || [];
+  if(tasks.length === 0){
+    const p = document.createElement('div');
+    p.className = 'empty-note';
+    p.textContent = 'No tasks yet — add today\'s work above.';
+    list.appendChild(p);
+  }
+  tasks.forEach(task => {
+    const row = document.createElement('div');
+    row.className = 'task-item';
+    row.innerHTML = `
+      <div class="tick ${task.done ? 'done':''}" data-id="${task.id}">${task.done ? '✓':''}</div>
+      <div class="task-text ${task.done ? 'done':''}">${escapeHtml(task.text)}</div>
+      <button class="task-del" data-id="${task.id}">✕</button>
+    `;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('.tick').forEach(el => el.onclick = () => toggleTask(el.dataset.id));
+  list.querySelectorAll('.task-del').forEach(el => el.onclick = () => deleteTask(el.dataset.id));
+
+  // DSA pattern
+  const [cat, name] = currentPattern();
+  document.getElementById('dsa-cat').textContent = cat;
+  document.getElementById('dsa-name').textContent = name;
+  const patNum = state.patternIndex + 1;
+  document.getElementById('pattern-progress-label').textContent = `#${patNum} / ${PATTERNS.length}`;
+  const days = diffDays(t, state.patternStartDate);
+  const dotsWrap = document.getElementById('day-dots');
+  dotsWrap.innerHTML = '';
+  const dotCount = Math.max(2, days + 1);
+  for(let i=0;i<dotCount;i++){
+    const d = document.createElement('div');
+    d.className = 'day-dot' + (i <= days ? ' filled' : '');
+    dotsWrap.appendChild(d);
+  }
+  const dotLabel = document.createElement('span');
+  dotLabel.className = 'day-dots-label';
+  dotLabel.textContent = `day ${days+1}`;
+  dotsWrap.appendChild(dotLabel);
+
+  const dsaDone = !!state.dsaLog[t];
+  const dsaTick = document.getElementById('dsa-tick');
+  dsaTick.className = 'tick' + (dsaDone ? ' done' : '');
+  dsaTick.textContent = dsaDone ? '✓' : '';
+  document.getElementById('dsa-mark').onclick = toggleDsa;
+
+  const note = document.getElementById('dsa-note');
+  if(dsaDone && days < 2){
+    note.textContent = `Marked practiced. This pattern stays through day 2, then the next pattern unlocks.`;
+  } else if(!dsaDone){
+    note.textContent = `Mark this practiced once you've solved a problem using it. It keeps repeating until you do.`;
+  } else {
+    note.textContent = `Ready to advance — next pattern unlocks tomorrow.`;
+  }
+
+  renderHeatmap();
+  renderTrend();
+  renderReflections();
+  saveState();
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+function toggleTask(id){
+  const t = todayStr();
+  const tasks = state.tasksByDate[t];
+  const task = tasks.find(x => x.id === id);
+  if(task) task.done = !task.done;
+  afterChange();
+}
+function deleteTask(id){
+  const t = todayStr();
+  state.tasksByDate[t] = state.tasksByDate[t].filter(x => x.id !== id);
+  afterChange();
+}
+function addTask(){
+  const input = document.getElementById('new-task-input');
+  const val = input.value.trim();
+  if(!val) return;
+  const t = todayStr();
+  if(!state.tasksByDate[t]) state.tasksByDate[t] = [];
+  state.tasksByDate[t].push({id: uid(), text: val, done: false});
+  input.value = '';
+  afterChange();
+}
+function toggleDsa(){
+  const t = todayStr();
+  const wasDone = !!state.dsaLog[t];
+  state.dsaLog[t] = !wasDone;
+  if(state.dsaLog[t]) state.patternDone = true;
+  afterChange();
+}
+
+function afterChange(){
+  const t = todayStr();
+  if(isDayFull(t) && state.lastFullDate !== t){
+    const yestGap = state.lastFullDate ? diffDays(t, state.lastFullDate) : null;
+    if(yestGap === 1){ state.streak += 1; }
+    else { state.streak = 1; }
+    state.lastFullDate = t;
+    render();
+    openReflectionModal();
+    return;
+  }
+  render();
+}
+
+/* ---------------- HEATMAP + TREND ---------------- */
+
+function completionRate(dateStr){
+  const tasks = state.tasksByDate[dateStr] || [];
+  const dsaDone = state.dsaLog[dateStr] ? 1 : 0;
+  const totalUnits = tasks.length + 1;
+  const doneUnits = tasks.filter(x=>x.done).length + dsaDone;
+  if(totalUnits === 0) return 0;
+  return doneUnits / totalUnits;
+}
+
+function renderHeatmap(){
+  const wrap = document.getElementById('heatmap');
+  wrap.innerHTML = '';
+  const days = 70;
+  const t = todayStr();
+  const start = new Date(dateFromStr(t));
+  start.setDate(start.getDate() - (days-1));
+  // align to start of week (Sunday)
+  const startDow = start.getDay();
+  start.setDate(start.getDate() - startDow);
+
+  const cells = [];
+  const totalCells = days + startDow + 7;
+  for(let i=0;i<totalCells;i++){
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    if(d > dateFromStr(t)) continue;
+    const rate = state.tasksByDate[ds] || state.dsaLog[ds] ? completionRate(ds) : 0;
+    cells.push({ds, rate});
+  }
+  cells.forEach(c => {
+    const el = document.createElement('div');
+    el.className = 'hcell';
+    el.title = `${c.ds}: ${Math.round(c.rate*100)}%`;
+    el.style.background = colorForRate(c.rate);
+    wrap.appendChild(el);
+  });
+}
+
+function colorForRate(r){
+  if(r <= 0) return '#242938';
+  if(r < 0.5) return '#7A4420';
+  if(r < 1) return '#B8622F';
+  return '#FF8A3D';
+}
+
+function renderTrend(){
+  const svg = document.getElementById('trend-svg');
+  const t = todayStr();
+  const N = 14;
+  const points = [];
+  for(let i=N-1;i>=0;i--){
+    const d = new Date(dateFromStr(t));
+    d.setDate(d.getDate() - i);
+    const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    points.push(completionRate(ds));
+  }
+  const W = 700, H = 110, pad = 10;
+  const stepX = (W - pad*2) / (N-1);
+  const coords = points.map((r,i) => {
+    const x = pad + i*stepX;
+    const y = H - pad - r*(H - pad*2);
+    return [x,y];
+  });
+  let path = `M ${coords[0][0]},${coords[0][1]}`;
+  for(let i=1;i<coords.length;i++) path += ` L ${coords[i][0]},${coords[i][1]}`;
+  let area = path + ` L ${coords[coords.length-1][0]},${H-pad} L ${coords[0][0]},${H-pad} Z`;
+
+  const lastFull = points[points.length-1] >= 1;
+  const lineColor = lastFull ? '#35D2A4' : '#FF8A3D';
+
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${lineColor}" stop-opacity="0.35"/>
+        <stop offset="100%" stop-color="${lineColor}" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <line x1="${pad}" y1="${H-pad}" x2="${W-pad}" y2="${H-pad}" stroke="#242938" stroke-width="1"/>
+    <path d="${area}" fill="url(#trendFill)"/>
+    <path d="${path}" fill="none" stroke="${lineColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    ${coords.map(([x,y]) => `<circle cx="${x}" cy="${y}" r="3" fill="${lineColor}"/>`).join('')}
+  `;
+}
+
+/* ---------------- REFLECTIONS ---------------- */
+
+function renderReflections(){
+  const wrap = document.getElementById('reflect-list');
+  const entries = Object.entries(state.reflections).sort((a,b) => a[0] < b[0] ? 1 : -1).slice(0,20);
+  wrap.innerHTML = '';
+  if(entries.length === 0){
+    wrap.innerHTML = '<div class="empty-note">Nothing logged yet — finish today\'s tasks to add your first entry.</div>';
+    return;
+  }
+  entries.forEach(([date, text]) => {
+    const el = document.createElement('div');
+    el.className = 'reflect-item';
+    el.innerHTML = `<div class="reflect-date">${date}</div><div class="reflect-text">${escapeHtml(text)}</div>`;
+    wrap.appendChild(el);
+  });
+}
+
+function openReflectionModal(){
+  const t = todayStr();
+  if(state.reflections[t]) return; // already answered today
+  document.getElementById('reflect-input').value = '';
+  document.getElementById('modal-overlay').style.display = 'flex';
+}
+function closeModal(){
+  document.getElementById('modal-overlay').style.display = 'none';
+}
+
+document.getElementById('modal-save').onclick = () => {
+  const t = todayStr();
+  const val = document.getElementById('reflect-input').value.trim();
+  state.reflections[t] = val || 'Completed all tasks — no notes added.';
+  saveState();
+  renderReflections();
+  closeModal();
+};
+document.getElementById('modal-skip').onclick = closeModal;
+
+/* ---------------- MOTIVATION QUOTES (login screen) ---------------- */
+
+let quoteTimer = null;
+function startQuoteRotation(){
+  const textEl = document.getElementById('quote-text');
+  const attrEl = document.getElementById('quote-attr');
+  let idx = Math.floor(Math.random() * QUOTES.length);
+  const show = () => {
+    const [q, a] = QUOTES[idx % QUOTES.length];
+    textEl.style.animation = 'none';
+    void textEl.offsetWidth; // restart animation
+    textEl.style.animation = '';
+    textEl.textContent = `"${q}"`;
+    attrEl.textContent = `— ${a}`;
+    idx++;
+  };
+  show();
+  if(quoteTimer) clearInterval(quoteTimer);
+  quoteTimer = setInterval(show, 6000);
+}
+
+/* ---------------- AUTH TABS ---------------- */
+
+document.getElementById('tab-login-btn').onclick = () => switchTab('login');
+document.getElementById('tab-register-btn').onclick = () => switchTab('register');
+
+function switchTab(which){
+  document.getElementById('tab-login-btn').classList.toggle('active', which === 'login');
+  document.getElementById('tab-register-btn').classList.toggle('active', which === 'register');
+  document.getElementById('panel-login').classList.toggle('active', which === 'login');
+  document.getElementById('panel-register').classList.toggle('active', which === 'register');
+  document.getElementById('login-err').textContent = '';
+  document.getElementById('register-err').textContent = '';
+}
+
+/* ---------------- LOGIN / REGISTER ---------------- */
+
+document.getElementById('login-btn').onclick = doLogin;
+document.getElementById('pass-input').addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
+document.getElementById('user-input').addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
+
+async function doLogin(){
+  const u = document.getElementById('user-input').value.trim();
+  const p = document.getElementById('pass-input').value;
+  const err = document.getElementById('login-err');
+  err.textContent = 'Checking…';
+  const users = await loadUsers();
+  if(users[u] && users[u] === p){
+    err.textContent = '';
+    currentUser = u;
+    enterApp();
+  } else {
+    err.textContent = 'Incorrect username or password.';
+  }
+}
+
+document.getElementById('register-btn').onclick = doRegister;
+document.getElementById('reg-pass-confirm').addEventListener('keydown', e => { if(e.key === 'Enter') doRegister(); });
+
+async function doRegister(){
+  const u = document.getElementById('reg-user-input').value.trim();
+  const p = document.getElementById('reg-pass-input').value;
+  const p2 = document.getElementById('reg-pass-confirm').value;
+  const err = document.getElementById('register-err');
+
+  if(u.length < 2){ err.textContent = 'Username must be at least 2 characters.'; return; }
+  if(!/^[a-zA-Z0-9_]+$/.test(u)){ err.textContent = 'Use letters, numbers, or underscores only.'; return; }
+  if(p.length < 4){ err.textContent = 'Password must be at least 4 characters.'; return; }
+  if(p !== p2){ err.textContent = 'Passwords do not match.'; return; }
+
+  err.textContent = 'Creating account…';
+  const users = await loadUsers();
+  if(users[u]){ err.textContent = 'That username is already taken.'; return; }
+  users[u] = p;
+  await saveUsers(users);
+  err.textContent = '';
+  currentUser = u;
+  enterApp();
+}
+
+document.getElementById('logout-btn').onclick = () => {
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('user-input').value = '';
+  document.getElementById('pass-input').value = '';
+  document.getElementById('login-err').textContent = '';
+  currentUser = null;
+  state = null;
+  switchTab('login');
+  startQuoteRotation();
+};
+
+document.getElementById('add-task-btn').onclick = addTask;
+document.getElementById('new-task-input').addEventListener('keydown', e => { if(e.key === 'Enter') addTask(); });
+
+async function enterApp(){
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+  if(quoteTimer) clearInterval(quoteTimer);
+  state = await loadState();
+  ensureToday();
+  render();
+}
+
+startQuoteRotation();
+
+})();
+</script>
+</body>
+</html>
